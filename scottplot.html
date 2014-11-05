@@ -1,0 +1,279 @@
+<html >
+	<head>
+		<title>Scott Plot</title>
+		
+		
+		
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+		<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+		<style>
+			label{
+				font-weight: 400;
+				font-size: small;
+			}
+			.selection{
+				width:50%;
+				display: inline;
+				float: left;
+			}
+			#subtotalTaxa{
+				overflow:auto;
+				height: 200px
+			}
+			.selection_st{
+				width:25%;
+				display:inline;
+				float:left;
+			}
+			.st_entry{
+				width:600px;
+			}
+			#properties{
+				padding-bottom: 20px;
+			}
+			</style>
+	</head>
+	<body>
+		<div class='page-header'>
+			<h1>Ready, Set, Plot!</h1>
+			
+		</div>
+		<div id='enterData'>
+			<label for='datafile'>Enter Datafile:</label><input type="file" name="datafile" id='datafile' />
+		</div>
+		<div id='taxa' class='col-sm-4'>
+			<p>Enter a comma separated value (csv) file to get started.</p>
+		</div>
+		<div id='Properties' class='col-sm-8'>
+			<p class='placeholder'>Properties will show up here</p>
+			
+			<div class='form-group' id='plotProperties'>
+				<h4>Plot Properties</h4>
+				<button id="pPropToggle">Toggle Plot Inputs Panel</button>
+				<div id='plotPropertiesInputs'>
+					<legend>Plot Dimensions:</legend>
+						<div class='form-group' style="text-align: left" style="float: right">
+						Width:<input type='text' id='plotwidth'><br />
+						Height: <input type="text" id='plotheight'><br />
+						Autoscale: <input type="checkbox" id='plotDimAuto'><br />
+					</div>
+				<legend>Depth Factoring</legend>
+					<div class='form-group'>
+						Factor all levels by: <input type="text" id='levelfactor'><br />
+						Don't factor the levels: <input type="checkbox" id='nofactorlevels'/>
+					</div>
+				</div>
+			</div>
+			<div class='form-group' id='subTotalProperties'>
+				<h4>Subtotals and Normalization</h4>
+				<button id='subtotalToggle'>Toggle Subtotals Panel</button>
+				<div id='subtotalInputs'>
+				<p>Click on names to add to the current subtotal.</p>
+				<p>Click below to start a new subtotal.</p>
+				<button id='makeNewST'>Add a new Subtotal</button>
+				<form>
+					<div id='subtotalTaxa' ></div>
+				</form>
+					<div id='subtotals'>
+					</div>
+				<div id='LOI'>
+					Upload an LOI File (optional): <input type='file'  name='loifile' id='loifile'/>
+					<p>This file should conform to the specified format.</p>
+					<p>Uploading this file will allow taxa to be plotted as concentration, influx, or accumulation rates.</p>
+				</div>
+				
+				</div>
+			</div>
+			<div> 
+			<h4>Curve Specific Properties</h4>
+			<button id='curveToggle'>Toggle Curve Specific Properties</button>
+			<p>Click on the panel to the left to add specify curves to plot.</p>
+			<div id='curveProperties'>
+				
+			</div>
+				
+			</div>
+		</div>
+		
+		
+
+		
+		<script >
+		var loidata;
+		var data;
+		var data_properties = {};
+		var subtotals = {}
+		
+		//User input of the data file fires load on change
+			$('#datafile').on('change', function(){
+				datafile = $("#datafile").get(0).files[0]
+				console.log("Data is from: " + datafile)
+				loadData(datafile)
+				//$('#datafile').attr('disabled', 'disabled')
+				$('#enterData').hide()
+				$('#taxa').html('<h3>Taxa in Dataset: ' + datafile)
+				$('.placeholder').hide()
+			})
+			
+			function loadData(csv){
+				d3.text(csv, function(updata){
+				d = d3.csv.parseRows(updata)
+				data = d;
+				names = []
+				for (i in d){
+					name = d[0][i]
+					names.push(name)
+				}
+				for (name in names){
+					n = names[name]
+					if (n != ""){
+						div = $('<div class="selection" id="' + n +'_select"></div>')
+						i = $('<input type="checkbox" name="' + n + '"/><label for="' + n + '" >' + n + '</label>')
+						i.on('click', ToProperties)
+						div.append(i)
+						//i.on('click', dispatch)
+						$('#taxa').append(div)
+						div = $('<div class="selection_st" id="' + n +'_select"></div>')
+						i = $('<input class="selection_st" type="checkbox" name="' + n + '"/><label for="' + n + '" >' + n + '</label>')
+						div.append(i)
+						i.on('click', addToSubtotal)
+						$('#subtotalTaxa').append(div)
+					}
+				}
+			})
+			}
+			
+			//////////////Curve Specific Properties///////////////////////////
+			var ToProperties = function(){
+				$('.placeholder').hide()
+				var input = this
+				var name = this.name
+				console.log(name)
+				if (input.checked){
+					$('#curveProperties').append('<div id="'+ name +'_SetProperties"><legend>' + name + "</legend></div>")
+					data_properties[name] = []
+					theDiv = $('#' + name + "_SetProperties")
+					console.log(theDiv)
+					theDiv.on('click', getCurveProperties)
+					curveAutoscale = 'Autoscale Curve Width <input type="checkbox" id="' + name + '_autoscale"/><br />'
+					curveWidth = 'Specify Curve Width <input type=text" id="' + name + '_width"/><br />'
+					displayAsSmooth = 'Display as 3-Point Smoothed Curve <input type="checkbox" id="'+name+'_smooth"/><br />'
+					normType = 'Select Normalization Type: <br />'
+					if (loidata != {}){ ///want it to automatically recognize which properties are available given subtotals
+						i = 'None: <input type="radio" name="normtype" value="none"/><br />'
+						a = ' Concentration <input type="radio" value="concentration" name="normtype"/>'
+						b = ' Accumulation <input type="radio" value="accumulation" name="normtype"/>'
+						c = ' Percent of Subtotal <input type="radio" value="concentration" name="normtype"/> <input list="subtotals"/>\n<datalist id="subtotals">'
+						console.log(subtotals)
+						for (i in subtotals){
+							c += ' <option value="Subtotal ' + i + '">\n'
+							console.log(c)
+						}
+						c += "</datalist>"
+						
+					}
+					norm = normType + i + a + b + c + '<br />'
+					lineColor = 'Line Color: <input type="color" name="linecolor"/>'
+					fillColor = 'Fill Color: <input type="color" name="fillcolor"/><br />'
+					//fill pattern????
+					group = "Taxa Group: None <input type='radio' name='grp' value='none'>"
+					group += " Trees <input type='radio' name='grp' value='trees'/>"
+					group += " Shrubs <input type='radio' name='grp' value='shrubs'/>"
+					group += " Herbs <input type='radio' name='grp' value='herbs'/>"
+					group += " Ferns <input type='radio' name='grp' value='ferns'/>"
+					group += " Aquatics <input type='radio' name='grp' value='aquatics'/>"
+					group += " Herbs and Shrubs <input type='radio' name='grp' value='h&s'/><br />"
+					
+					btmLabel = 'Label to go below the Curve: <input type="text"/>'
+					
+					
+					theDiv.append(curveAutoscale).append(curveWidth).append(displayAsSmooth).append(norm).append(lineColor).append(fillColor).append(group)
+					
+				
+				}else{
+					//add removal properties
+					}
+					
+			}	
+			
+		var numSubtotals = 0;
+		var current_subtotal = numSubtotals;
+		//////////////jQuery Interactions//////////////////////////
+			$('#pPropToggle').click(function(){
+				$('#plotPropertiesInputs').slideToggle()
+			})
+			$('#subtotalToggle').click(function(){
+				$('#subtotalInputs').slideToggle()
+			})
+			$('#makeNewST').click(function(){
+				numSubtotals +=1
+				current_subtotal = +current_subtotal + 1
+				var textinput = '<input type="text" name="subtotal_' + numSubtotals + '" id="subtotal_' + numSubtotals + '" class="st_entry" number="' + numSubtotals + '"/>'
+				var label = '<label for="subtotal_"' + numSubtotals + '">Subtotal ' + numSubtotals + ': </label>' 
+				var add = '<div>' + label + textinput + '</div>'
+				subtotals[numSubtotals] = []
+				$('#subtotals').append(add)
+				$('.st_entry').on('click', updateSubtotal)
+			})
+			
+			/////////////////on-click disable functions/////////////
+			$('#nofactorlevels').on('change', function(){
+				input = this
+				checked = this.checked
+				if (checked){
+					$('#levelfactor').prop('disabled', true)
+				}else if(!checked){
+					$('#levelfactor').prop('disabled', false)
+				}
+			})
+			$('#plotDimAuto').on('change', function(){
+				input = this
+				checked = this.checked
+				if (checked){
+					$('#plotwidth').prop('disabled', true)
+					$('#plotheight').prop('disabled', true)
+				}else if(!checked){
+					$('#plotwidth').prop('disabled', false)
+					$('#plotheight').prop('disabled', false)
+				}
+			})
+			
+			
+			
+			
+			////////////////////////////////FUNCTIONS//////////////////////////
+			function updateSubtotal(){
+				id = this['id'];
+				num1 = id.slice(-1).toString()
+				num2 = id.slice(-2,-1).toString()
+				if (num2 == "_"){
+					console.log('_')
+					num = num1
+				}else{
+					num = num2 + num1
+				}
+				console.log('Subtotal Changing from ' + current_subtotal + " To " + num)
+				current_subtotal = num 
+			}
+			function addToSubtotal(){
+				console.log(current_subtotal)
+				name = this.name
+				if(!$.isEmptyObject(subtotals)){
+				subtotals[current_subtotal].push(name)
+				console.log('working')
+				st = '#subtotal_' + current_subtotal
+				current_val = $(st).val()
+				new_val = current_val + name + ', '
+				$(st).val(new_val)
+				}			
+			}
+			function getCurveProperties(){
+				//console.log('get curve properties working, not implemented')
+			}
+		</script>
+	</body>
+	
+</html>

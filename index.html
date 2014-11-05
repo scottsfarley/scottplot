@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>index</title>
+  <meta name="description" content="">
+  <meta name="author" content="Scott Farley">
+
+  <meta name="viewport" content="width=device-width; initial-scale=1.0">
+
+  <!-- Replace favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+</head>
+
+<body>
+  <div>
+    <header>
+      <h1>index</h1>
+    </header>
+    <nav>
+      <p><a href="/">Home</a></p>
+      <p><a href="/contact">Contact</a></p>
+    </nav>
+
+    <div>
+      Enter a File <input type='file' id='input'/>
+      <div id='editor' contenteditable="true"></div>
+    </div>
+
+    <footer>
+     <p>&copy; Copyright  by Scott Farley</p>
+    </footer>
+  </div>
+  <script>
+  	var File;
+  	$('#input').on('change', function(){
+  		var finput = document.getElementById('input');
+  		var editor = document.getElementById('editor');
+  		var f = finput.files[0];
+  		if (f){
+  			var reader = new FileReader();
+  			reader.onload = function (e) {
+  				d = e.target.result
+  				a = d3.csv.parseRows(d)
+  				console.log(a)
+  				
+  			}
+  			reader.readAsText(f)
+  		}else{
+  			alert('failed')
+  		}
+  		
+  		
+  	})
+  	
+  	
+  </script>
+</body>
+</html>
