@@ -443,10 +443,164 @@ var numNorms = 0
  })
  
  //////////Taxa tab
+ 
+ var numTaxa = 0;
+ 
+ //Add a svg to layout the final plot
+
+layout = d3.select('#layout').append('svg')
+.attr('height',200)
+.attr('width', 600)
+.attr('class', 'layout')
+box1 = layout.append('rect')
+	.attr('x', 0)
+	.attr('y', 0)
+	.attr('width', 75)
+	.attr('height', 200)
+	.attr('fill','lightblue')
+	.attr('opacity', 0.5)
+box2 = layout.append('rect')
+	.attr('x', 75)
+	.attr('y', 0)
+	.attr('width', 525)
+	.attr('height', 200)
+	.attr('fill','lightyellow')
+	.attr('opacity', 0.5)
+leftAxis = layout.append('line')
+	.attr('x1', 75)
+	.attr('x2', 75)
+	.attr('y1', 0)
+	.attr('y2', 200)
+	.attr('stroke', 'black')
+	.attr('class', 'layout')
+leftText = layout.append('text')
+	.attr('x', (75/2))
+	.attr('y', 100)
+	.attr('text-anchor', 'middle')
+	.text('Axis')
+	.attr('class', 'layout')
+
+var numTaxa = 0
+var layoutLabels = []
+
+
+////////Handle dragging bars to specify curve width
+var drag = d3.behavior.drag()
+	.on('drag', dragmove)
+
+function dragmove(d){
+	a = d3.select(this)
+	var mouseX = d3.event.x
+	var num = a.attr('lineNum')
+	start = layoutData[num]['start']
+	thisWidth =  (mouseX - start) 
+	newPercentageVal = (thisWidth / canvasArea) * 100
+	numCurves = Object.keys(layoutData).length - 1 // -1 to do list index
+	if ((num != numCurves)){ // can't do this on the first last curve
+		nextNum = +num + 1
+		nextStart = mouseX
+		nextEnd = layoutData[nextNum]['end']
+		nextWidth = nextEnd - nextStart
+		nextPercentageVal = (nextWidth / canvasArea) * 100
+		if ((newPercentageVal > 1) & (newPercentageVal < 99) & (nextPercentageVal > 1) & (nextPercentageVal < 99)){
+			nextLabelPos = nextWidth / 2 + nextStart
+			nextPercentageLab = Math.round(nextPercentageVal) + '%'
+			nextLab = layoutData[nextNum]['label']
+			nextLab.attr('x', nextLabelPos)
+				.attr('transform', 'rotate(-90 ' + nextLabelPos + ',' + (layoutHeight / 2) + ')')
+			nextPercent = layoutData[nextNum]['label2']
+			nextPercent.attr('x', nextLabelPos).text(nextPercentageLab)
+			layoutData[nextNum] = {'start':nextStart, 'end': nextEnd, 'label':nextLab, 'width':nextWidth, 'label2':nextPercent }
+				if ((newPercentageVal > 1) & (newPercentageVal < 99)){
+					label = layoutData[num]['label']
+					labelPos = (mouseX - start)/2 +  start
+					a.attr('x1', mouseX)
+					.attr('x2', mouseX)
+					label.attr('x', labelPos)
+						.attr('transform', 'rotate(-90 ' + labelPos + ',' + (layoutHeight / 2) + ')')
+					label2 = layoutData[num]['label2']
+					newPercentageVal = thisWidth / canvasArea
+					newPercentLab = Math.round(newPercentageVal * 100) + '%'
+					label2.attr('x', labelPos)
+					label2.text(newPercentLab)
+					layoutData[num] = {'start':start, 'end': mouseX, 'label':label, 'width':thisWidth, 'label2':label2 }
+				}
+		}
+	}
+
+}
+layoutWidth = 750
+layoutAxis = 75
+layoutHeight = 200
+var layoutData = {}
+var canvasArea = layoutWidth - layoutAxis
+function selectTaxonForGraphing(){
+	d3.selectAll('.t').remove() //delete any existing lines so we can add new ones to the layout plot
+	id = this['id']
+	label = $(this).html()
+	layoutLabels.push(label)
+	file = $(this).data('file')
+	$(this).toggleClass('selectedTaxa')
+	if ($(this).hasClass('selectedTaxa')){///active
+		numTaxa +=1
+		$('#taxaBadge').html(numTaxa)
+		$('select-menu-item').addClass('menu-completed')
+		var OptionsID = id.split('mainSelect').join('Options')
+		var i = 0;
+		var offset = layoutAxis
+		oldx = offset
+		///divide the diagram based on number of curves needed
+		while (i < numTaxa){
+			xPos = (canvasArea)/numTaxa + offset
+			textPos = (xPos - oldx)/2 + oldx
+			width = xPos - oldx
+			l2 = layout.append('line')
+				.attr('x1', xPos)
+				.attr('x2', xPos)
+				.attr('y2', layoutHeight)
+				.attr('y1', 0)
+				.attr('stroke', 'green')
+				.attr('fill', 'lightyellow')
+				.attr('stroke-width', 8)
+				.attr('class', 'dragLine')
+				.attr('class', 't')
+				.attr('lineNum', i)
+			label = layout.append('text')
+				.attr('x', textPos)
+				.attr('y', (layoutHeight / 2))
+				.attr('text-anchor', 'middle')
+				.text(layoutLabels[i])
+				.attr('class', 't')
+				.attr('transform', 'rotate(-90 ' + textPos + ',100)')
+			percent = Math.round((width / canvasArea) * 100) + '%'
+			label2 = layout.append('text')
+				.attr('x', textPos)
+				.attr('y', 10)
+				.attr('text-anchor', 'middle')
+				.text(percent)
+				.attr('class', 't')
+			if (i != (numTaxa - 1)){
+				l2.call(drag)
+			}
+			layoutData[i] = {'start':oldx, 'label2':label2,'end':xPos, 'label':label, 'width':width, 'rect':box}
+			offset += (canvasArea)/numTaxa 
+			oldx = xPos
+			i+=1
+		}
+		d3.selectAll('text').on('click', function(){
+			console.log(this)
+		})
+	}
+}
+
+ 
+ 
+ 
+ 
  var numTaxa = 0;
  var taxaIDs = []
  ////select for graphing is fired from the file handling functions
- function selectTaxonForGraphing(){
+ function OLD(){
  	input = this
  	label = $(input).html()
  	id = this['id']

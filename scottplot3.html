@@ -137,6 +137,9 @@
         				<li class='list-group-item' id='TaxaDimension-menu-item'>Determine curve dimensions and scaling</li>
         			</ul>
         		</li>
+        		<li  class='list-group-item' style="text-align: center">
+		            <a  class="btn btn-primary" id="go" data-toggle="tab">Go!</a>
+        		</li>
         		
         	</ul>
         	
@@ -266,14 +269,17 @@
         
           <!--Taxa --------- TAB--->
         <div class="tab-pane" id="taxaPage">
-            <h1 class='page-header'>Taxa</h1>
-            <div class='container'>
+        	 <div class='page-header'>
+        	 	<h4>Taxa</h4>
+        	 	<p>Use the controls below to specify the characteristics of the individual curves.</p>
+        	 </div>
+            <div class='container col-md-10'>
+            	<div id='layout'></div>
+            	<div id='controls'>
+            		<p>Hello, world!</p>
+            	</div>
             <div id='taxaContent'>
             	
-            </div>
-            <div align="center">
-            <p>Everything set?</p>
-            <a  class="btn btn-primary" id="go" data-toggle="tab">Go!</a>
             </div>
             
             </div>
@@ -284,7 +290,7 @@
             <h1 class='page-header'>Plot</h1>
             <div class='container'>
 		            <div id='thePlot'>
-		            	<!--Plot goes here--->
+            	<!--Plot goes here--->
 		            </div>
             </div>
         </div>
