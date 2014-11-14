@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Scripts and styles -->
+<link href="../bootstrap/css/bootstrap.css" rel="stylesheet">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap-theme.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<style>
+			#dd{
+				background-color: lightgreen;
+				height: 100px;
+				text-align: center;
+				padding-left:0px;
+			}
+			.taxonName, .subtotal_select{
+				width: 25%;
+				display: inline;
+				float:left;
+			}
+			.taxadiv, #subtotalTaxa{
+				overflow: auto;
+			}
+			.taxadiv, #subtotalTaxa label{
+				font-weight: 300;
+			}
+			.tt{
+				color: black;
+				
+			}
+			#filestatus{
+				background-color: gray;
+				border: 2px groove;
+				border-radius: 15px;
+				padding-left:2px;
+				box-shadow: 10px 10px 5px #888888;
+				
+			}
+			.input-ssf{
+				margin-left: 10px;
+				
+			}
+			.accordion-heading{
+				background-color: rgb(255, 255, 255);
+				border: 1px groove gray;
+				padding-left:5px;
+			}
+			.accordion-heading a{
+				color:#181818 ;
+			}
+			.accordion-inner{
+				margin-bottom: 20px;
+			}
+			#sidebar-wrapper{
+				padding-top: 25px;
+				
+			}
+			.menu-completed{
+				background-color: lightgreen;
+			}
+			.selectedTaxa{
+				font-weight: bold;	
+			}
+			.container{
+				padding-bottom: 25px;
+			}
+			#thePlot{
+				overflow:auto;
+			}
+			.glyphicon-refresh-animate {
+			    -animation: spin .7s infinite linear;
+			    -webkit-animation: spin2 .7s infinite linear;
+			}
+			
+			@-webkit-keyframes spin2 {
+			    from { -webkit-transform: rotate(0deg);}
+			    to { -webkit-transform: rotate(360deg);}
+			}
+			
+			@keyframes spin {
+			    from { transform: scale(1) rotate(0deg);}
+			    to { transform: scale(1) rotate(360deg);}
+			}
+			
+			.axis path,
+			.axis line {
+			    fill: none;
+			    stroke: black;
+			    shape-rendering: crispEdges;
+			}
+			
+			.axis text {
+			    font-family: sans-serif;
+			    font-size: 11px;
+			}
+		
+
+		</style>
+</head>
+ 
+<body>
+ 
+
+<div class='col-md-12'>  <!-- Doc container -->
+ <!-- Sidebar -->
+        <div id="sidebar-wrapper" class='col-md-2'>
+        	<h4 id='projectTitle'>Get started!</h4>
+        	<ul class ='list-group'>
+        		<li class='list-group-item' id='prep-menu-item'>Prepare your Data <span id='prep-menu-span'></span>
+        			<ul class='list-group' id='prep-submenu'>
+        				<li class='list-group-item' id='name-menu-item'>Name your project</li>
+        				<li class='list-group-item' id='datafile-menu-item'>Upload datafiles <span id='datafilesBadge' class='badge'></span></li>
+        				<li class='list-group-item' id='chrono-menu-item'>Upload chronology file</li>
+        				<li class='list-group-item' id='normfile-menu-item'>Upload normalization file</li>
+        				<li class='list-group-item' id='select-menu-item'>Select Taxa for Graphing<span id='taxaBadge' class='badge'></span></li>
+        			</ul>
+        			</li>
+        		<li class='list-group-item' id='norm-menu-item'>Normalize your data <span id='norm-menu-span'></span>
+        			<ul class='list-group'>
+        				<li class='list-group-item' id='subtotal-menu-item'>Set up internal subtotal generation <span id='subtotalsBadge' class='badge'></span></li>
+        				<li class='list-group-item' id='influx-menu-item'>Generate Concentrations<span id='influxBadge' class='badge'></span></li>
+        			</ul>
+        			</li>
+        		<li class='list-group-item' id='build-menu-item'>Build your plot <span id='build-menu-span'></span>
+        			<ul class='list-group'>
+        				<li class='list-group-item' id='plotDim-menu-item'>Specify plot dimensions</li>
+        				<li class='list-group-item' id='axisSelect-menu-item'>Select axes and factoring</li>
+        			</ul>
+        				
+        		</li>
+        		<li class='list-group-item' id='taxa-menu-item'>Style your Taxa <span id='taxa-menu-span'></span>
+        			<ul class='list-group'>
+        				<li class='list-group-item' id='Color-menu-item'>Specify color schme</li>
+        				<li class='list-group-item' id='TaxaNorm-menu-item'>Select normalization types</li>
+        				<li class='list-group-item' id='TaxaDimension-menu-item'>Determine curve dimensions and scaling</li>
+        			</ul>
+        		</li>
+        		
+        	</ul>
+        	
+        	
+        	
+        	
+           
+        </div>
+        <!-- /#sidebar-wrapper -->	
+ 
+<!-------->
+<div id="content" class='col-md-10'>
+    <ul id="tabs" class="nav nav-tabs" data-tabs="tabs">
+        <li class="active"><a href="#prepare" data-toggle="tab">Prepare</a></li>
+        <li><a href="#normalize" data-toggle="tab">Normalize</a></li>
+        <li><a href="#build" data-toggle="tab">Build</a></li>
+        <li id='taxaTab'><a href="#taxaPage" data-toggle="tab" >Taxa</a></li>
+        <li id='plotTab'><a href="#plot" data-toggle="tab" >Plot</a></li>
+        <li><a href="#log" data-toggle="tab" >Log</a></li>
+        <li><div id='working'><span class='glyphicon glyphicon-refresh '></span>Building your plot...</div></li>
+    </ul>
+    <!--Main Content--->
+    <div id="my-tab-content" class="tab-content">
+    	 <!--PREPARE -----------TAB--->
+        <div class="tab-pane active" id="prepare">
+            <h1 class="page-header">Prepare</h1>
+            <div class='container'>
+            	<hr />
+            	<div id='giveTitle'>
+            		<label for='titleInput'>Project Title:</label><input type="text" placeholder="New Project" id='titleInput', name='titleInput' size='100' class='input-ssf'>
+            	</div>
+            	<hr />
+            	<div class='col-md-2'>
+	            	<div id='dd'>Drag and drop your data files here. </div>
+	            	<input type="file" id="datafiles" style="display: none;" multiple/>
+					<input type="button" value="Browse..." onclick="document.getElementById('datafiles').click();" />
+            	</div>
+            	<div id='fileproperties' class='col-md-2'>
+            		<button id='toggleTaxa'>Toggle Taxa</button>
+            		<div id='filestatus'>Message</div>
+            		</div>
+            	<div id='chronouploaddiv' class='col-md-3'>
+            		Upload Chronology File: <input type='file' id='chronofile'/>
+            	</div>
+            	<div id='normloaddiv' class='col-md-3'>
+            		Upload Normalization File: <input type='file' id='normfile'/>
+            	</div>
+            	
+            	
+            	
+            </div>
+            <div class='col-md-10' id='taxa'></div>
+        </div>
+        
+        
+        
+        
+        <!--Normalize --------- TAB--->
+        <div class="tab-pane" id="normalize">
+            <h1 class='page-header'>Normalize</h1>
+            <!--Subtotals and normalization --->
+			      <section>
+			        <div id='subtotalsContent'>
+			        	<h4 class='page-header'>Subtotals <span class='glyphicon glyphicon-minus' id='toggleSubtotals'></span></h4>
+			        	<button id='makeNewSubtotal'>Add Subtotal</button>
+			        	<div id='subtotalTaxa'></div>
+			        	<div id='subtotals'></div>
+			        </div>
+			      </section>
+			      <section>
+			        <div id='normalizationContent'>
+			        	<h4 class='page-header'>Concentration and Influx <span class='glyphicon glyphicon-minus toggle' id='toggleNormalization'></span></h4>
+			        	<div id='concentrationSelection'>
+			        	<p>On the previous tab, you uploaded a normalization file.  This allows the calculation of three metrics related to normalization.  If you want to use any of these methods in normalizing your taxa in the curve drawing process, please mark them below.</p>
+			        	<ul class='list-group'>
+			        		<li class='list-group-item'><input type='checkbox' id='doConcentrationWeight'/>Concentration (Grains per dry weight) </li>
+			        		<li class='list-group-item'><input type='checkbox' id='doConcentrationVolume'/>Concentration (Grains per volume) </li>
+			        		<li class='list-group-item'><input type='checkbox' id='doInflux'/>Influx (Grains per year per area)</li>
+			        	</ul>
+			        	<button id='calcApfac'>Calculate Selected Metrics</button>
+			        	</div>
+			        </div>
+			      </section>
+
+        </div>
+        
+        
+        
+       <!--Build ----------- TAB--->
+        <div class="tab-pane" id="build">
+             <h1 class="page-header">Dimensions</h1>
+             <div class='container'>
+             	<section>
+             			<h4 class='page-header'>Plot Dimensions <span class='glyphicon glyphicon-minus' id='plotDimToggle'></span></h4>
+             			<div id='plotDimConent'>
+             			<p>You may either autoscale the plot to a width and height optimal for on-screen viewing or specify the exact plot dimensions in inches.</p>
+             				<ul class='list-group'>
+             					<li class='list-group-item'><input type='checkbox' id='plotAutoscale'/>Autoscale Plot Dimensions</li>
+             					<li class='list-group-item'><input type='number' step='0.01' id='plotWidth'/> Plot Width</li>
+             					<li class='list-group-item'><input type='number' step='0.01' id='plotHeight'/> Plot Height</li>
+             				</ul>
+             		</div>
+             	</section>
+             	<section>
+             		<div id='axisContent'>
+             			<h4 class='page-header'>Axis Selection and Factoring <span class='glyphicon glyphicon-minus' id='factoringToggle'></span></h4>
+             				<p>Plots will default to a scaling derived from the depths given in the datafiles.  If provided a chronology file, however, you will be able to scale based on ages.</p>
+             				<ul class='list-group'>
+             					<li class='list-group-item'><input type='radio' id='scaleOnDepth' name='scaleSelect' checked/> Scale on Depth</li>
+             					<li class='list-group-item' id='scaleOnTimeItem'><input type='radio' id='scaleOnTime' name='scaleSelect'/> Scale on Chronology</li>
+             				</ul>
+             		</div>
+             	</section>
+             	<section>
+             		<div id='interactiveContent'>
+             			<h4 class='page-header'>Interactive Content<span class='glyphicon glyphicon-minus' id='interactiveToggle'></span></h4>
+             			<p>Interactive content can be added to the plot.  Select the items that you would like to interact with on your plot.</p>
+             				<ul class='list-group'>
+             					<li class='list-group-item'><input type='checkbox' id='addRuler' /> Add Horizontal Ruler</li>
+             					<li class='list-group-item'><input type='checkbox' id='add3PointToggle' /> Allow Smoothing Toggling</li>
+             				</ul>
+             		</div>
+             	</section>
+			</div><!--End of Build pane content--->
+			
+        </div>
+        
+          <!--Taxa --------- TAB--->
+        <div class="tab-pane" id="taxaPage">
+            <h1 class='page-header'>Taxa</h1>
+            <div class='container'>
+            <div id='taxaContent'>
+            	
+            </div>
+            <div align="center">
+            <p>Everything set?</p>
+            <a  class="btn btn-primary" id="go" data-toggle="tab">Go!</a>
+            </div>
+            
+            </div>
+        </div>
+        
+         
+        <div class="tab-pane" id="plot">
+            <h1 class='page-header'>Plot</h1>
+            <div class='container'>
+		            <div id='thePlot'>
+		            	<!--Plot goes here--->
+		            </div>
+            </div>
+        </div>
+        
+        
+        <div class="tab-pane" id="log">
+            <h1 class='page-header'>Log</h1>
+            <div class='container'>
+		            <ul id='theLog' class='list-group'>
+		            	<!--Log goes here--->
+		            </ul>
+            </div>
+        </div>
+    </div>
+</div>
+ 
+<script type="text/javascript">
+	///Activates Tab content---> Bootstrap & jQuery
+    jQuery(document).ready(function ($) {
+        $('#tabs').tab();
+    });
+    
+   
+</script>    
+</div> <!-- container -->
+ <script src='scottplot.js'></script>
+</body>
+</html>

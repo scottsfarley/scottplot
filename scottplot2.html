@@ -37,12 +37,13 @@
 			</style>
 	</head>
 	<body>
+		<form method="post" enctype="multipart/form-data" action="maker.php">
 		<div class='page-header'>
 			<h1>Ready, Set, Plot!</h1>
 			
 		</div>
 		<div id='enterData'>
-			<label for='datafile'>Enter Datafile:</label><input type="file" name="datafile" id='datafile' />
+			<label for='datafile'>Enter Datafile:</label><input type="file" name="datafile_upload" id='datafile' />
 		</div>
 		<div id='taxa' class='col-sm-3'>
 			<p>Enter a comma separated value (csv) file to get started.</p>
@@ -52,7 +53,7 @@
 			
 			<div class='form-group' id='plotProperties'>
 				<h4>Plot Properties</h4>
-				<button id="pPropToggle">Toggle Plot Inputs Panel</button>
+				<button type='button' id="pPropToggle">Toggle Plot Inputs Panel</button>
 				<div id='plotPropertiesInputs'>
 					<legend>Plot Dimensions:</legend>
 						<div class='form-group' style="text-align: left" style="float: right">
@@ -66,21 +67,19 @@
 						Don't factor the levels: <input type="checkbox" id='nofactorlevels'/>
 					</div>
 				</div>
-			</div>
+			</div>e
 			<div class='form-group' id='subTotalProperties'>
 				<h4>Subtotals and Normalization</h4>
 				<button id='subtotalToggle'>Toggle Subtotals Panel</button>
 				<div id='subtotalInputs'>
 				<p>Click on names to add to the current subtotal.</p>
 				<p>Click below to start a new subtotal.</p>
-				<button id='makeNewST'>Add a new Subtotal</button>
-				<form>
+				<button type='button' id='makeNewST'>Add a new Subtotal</button>
 					<div id='subtotalTaxa' ></div>
-				</form>
 					<div id='subtotals'>
 					</div>
 				<div id='LOI'>
-					Upload an LOI File (optional): <input type='file'  name='loifile' id='loifile'/>
+					Upload an LOI File (optional): <input type='file'  name='loifile_upload' id='loifile'/>
 					<p>This file should conform to the specified format.</p>
 					<p>Uploading this file will allow taxa to be plotted as concentration, influx, or accumulation rates.</p>
 				</div>
@@ -89,25 +88,25 @@
 			</div>
 			<div> 
 			<h4>Curve Specific Properties</h4>
-			<button id='curveToggle'>Toggle Curve Specific Properties</button>
+			<button type='button' id='curveToggle'>Toggle Curve Specific Properties</button>
 			<p>Click on the panel to the left to add specify curves to plot.</p>
 			<div id='curveProperties'>
 				
 			</div>
 				
 			</div>
+			
 		</div>
-		<form method='post' action='maker.php'>
+		
 			<input type='hidden' name='plotwidth' value=0 id='plotwidth_hidden'/>
 			<input type='hidden' name='datafilename' value="" id='datafile_name_hidden'/>
 			<input type='hidden' name='loifilename' value="" id='lotfile_name_hidden'/>
 			<input type='hidden' name='plotheight' value=0 id='plotheight_hidden'/>
 			<input type='hidden' name='factor_levels' value=1 id='factor_levels_hidden'/>
-			<input type='hidden' name='file' id='datafile_hidden' value="" />
-			<input type='hidden' name='loifile' id='loifile_hidden' value="" />
 			<input type='hidden' name='data' id='data' value='{}'/>
 			<input type='hidden' name='subtotals' id='subtotals_hidden' value=""/>
-		<input type='submit' value='Go!' id='submit'/>
+			<input type='hidden' name='depths' id='depths_hidden' value=''/>
+			<input type='submit' value='Go!'/>
 		</form>
 		
 		
@@ -135,7 +134,9 @@
 				var dfName = datafile.name
 				var numfiles = 1
 				console.log("Data is from: " + dfName)
+				
 				$('#datafile_name_hidden').val(dfName)
+				$('#datafile_hidden').val(datafile)
 				loadData(datafile)
 				$('#taxa').append('<h3>' + dfName + '</h3>')
 				$('.placeholder').hide()
@@ -151,12 +152,18 @@
 				var name = "CSV" + numfiles
 				data[name] = d;
 				console.log(data)
-				$('#datafile_hidden').val(data)
 				names = []
+				depths = []
 				for (i in d){
 					name = d[0][i]
 					names.push(name)
+					if (i != 0){
+					depth = d[i][0]
+					depths.push(depth)
+					console.log(depth)	
+					}
 				}
+				$('#depths_hidden').val(JSON.stringify(depths))
 				for (name in names){
 					n = names[name]
 					if (n != ""){
@@ -229,6 +236,7 @@
 					$('#' + id + "_SetProperties").remove()
 					delete data_properties[id]
 					console.log(data_properties)
+					
 					}
 					
 			}	

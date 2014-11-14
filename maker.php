@@ -1,15 +1,16 @@
 <?php
-	if($_POST['plotwidth'] != 0){
+	echo $_POST['plotwidth'];
+	if($_POST['plotwidth'] != ""){
 		$plotwidth = $_POST['plotwidth'];
 	}else{
-		$plotwidth = 'Auto';
+		$plotwidth = 800;
 	}
-	if($_POST['plotheight'] != 0){
+	if($_POST['plotheight'] != ""){
 		$plotheight = $_POST['plotheight'];
 	}else{
-		$plotheight = 'Auto';
+		$plotheight = 800;
 	}
-	if($_POST['factor_levels'] != 0){
+	if($_POST['factor_levels'] != ""){
 		$factor_levels = $_POST['factor_levels'];
 	}else{
 		$factor_levels = 1;
@@ -28,10 +29,34 @@
 
 	$curve_attributes = (string)$_POST['data'];
 	$curve_attributes = (array)json_decode($curve_attributes, TRUE);
-	$datafile = $_POST['file'];
-	$loifile = $_POST['loifile'];
+	$datafile = $_FILES['datafile_upload'];
+	$loifile = $_FILES['loifile_upload'];
 	$subtotals =(string) $_POST['subtotals'];
 	$subtotals = (array)json_decode($subtotals, TRUE);
+	$depths = $_POST['depths'];
+	$depths = json_decode($depths);
+	$depths = array_map('intval', $depths);
+	$row = 1;
+	$names;
+	$depth_length = count($depths);
+	if (($handle = fopen($datafile['tmp_name'], "r")) !== FALSE) {
+		  while (($data = fgetcsv($handle, 1000, ",")) !== FALSE) {
+		  	if ($row == 1){
+		  		$names = $data;
+		  	}else{
+			    $num = count($data);
+				$depth = $data[0];
+				//echo '<b>'.$depth . '</b>';		
+				${'Depth' . $depth} = $data;
+				//print_r( ${'Depth' . $depth});
+			}
+			$row++;
+		  }
+		  fclose($handle);
+		}
+	$minDepth = floatval(min($depths));
+	$maxDepth = floatval(max($depths));
+	echo $minDepth, $maxDepth
 	
 ?>
 <html>
@@ -48,10 +73,26 @@
 				font-family: "Courier New", Courier, monospace;
 				padding-left: 2%;
 			}
-		</style>
+			#plot{padding-left:2%
+			}
+			.axis path,
+		.axis line {
+		    fill: none;
+		    stroke: black;
+		    shape-rendering: crispEdges;
+		}
+		
+		.axis text {
+		    font-family: sans-serif;
+		    font-size: 11px;
+		}
+				</style>
 	</head>
 	<body>
 		<h1 class='page-header'>You've successfully requested a pollen diagram!</h1>
+		<div id='plot'>
+		</div>
+		
 		<h5>Here is a summary of the attributes that were recorded:</h5>
 		<div class='attributes'>
 		<p>Datafile: <?php echo $datafilename?></p>
@@ -79,5 +120,41 @@
 			}?></p>
 		<p>----END CURVE ATTRIBUTE RETURN----</p>
 		</div>
+		<script>
+		console.log(<?php $plotwidth?>)
+			plot = d3.select('#plot').append('svg')
+				.attr('height', <?php echo $plotheight ?>)
+				.attr('width', <?php echo $plotwidth?>)
+			plot.append('line')
+				.attr('x1', 0)
+				.attr('x2', <?php echo $plotwidth?>)	
+				.attr('y1', 0)
+				.attr('y2', <?php echo $plotheight?>)
+				.attr('stroke', 'red')
+			plot.append('line')
+				.attr('x1', <?php echo $plotwidth?>)
+				.attr('x2', 0)
+				.attr('y1', 0)
+				.attr('y2', <?php echo $plotheight?>)
+				.attr('stroke', 'red')
+			//var maxDepth = <?php $maxDepth?>;
+			//var minDepth = <?php $minDepth?>;
+			//console.log(maxDepth, minDepth)
+			depthScale = d3.scale.linear()
+				.domain([<?php echo $minDepth?> ,<?php $maxDepth?>])
+				.range([150, <?php echo $plotheight?>]) //150 point margin
+			console.log(depthScale)
+			depthAxis = d3.svg.axis()
+				.scale(depthScale)
+				.orient('left')
+				.ticks(20)
+			depth = plot.append('g')
+				.attr('class', 'axis')
+				.attr('transform', 'translate(50,0)')
+				.call(depthAxis)
+						
+			
+			
+		</script>
 	</body>
 </html>
