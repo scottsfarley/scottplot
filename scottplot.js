@@ -447,24 +447,23 @@ var numNorms = 0
  var numTaxa = 0;
  
  //Add a svg to layout the final plot
+ 
+ layoutWidth = 750
+layoutAxis = 75
+layoutHeight = 200
+var layoutData = {}
+var canvasArea = layoutWidth - layoutAxis
 
 layout = d3.select('#layout').append('svg')
-.attr('height',200)
-.attr('width', 600)
+.attr('height',layoutHeight)
+.attr('width', layoutWidth)
 .attr('class', 'layout')
 box1 = layout.append('rect')
 	.attr('x', 0)
 	.attr('y', 0)
-	.attr('width', 75)
-	.attr('height', 200)
+	.attr('width', layoutAxis)
+	.attr('height', layoutHeight)
 	.attr('fill','lightblue')
-	.attr('opacity', 0.5)
-box2 = layout.append('rect')
-	.attr('x', 75)
-	.attr('y', 0)
-	.attr('width', 525)
-	.attr('height', 200)
-	.attr('fill','lightyellow')
 	.attr('opacity', 0.5)
 leftAxis = layout.append('line')
 	.attr('x1', 75)
@@ -474,8 +473,8 @@ leftAxis = layout.append('line')
 	.attr('stroke', 'black')
 	.attr('class', 'layout')
 leftText = layout.append('text')
-	.attr('x', (75/2))
-	.attr('y', 100)
+	.attr('x', (layoutAxis/2))
+	.attr('y', (layoutHeight /2))
 	.attr('text-anchor', 'middle')
 	.text('Axis')
 	.attr('class', 'layout')
@@ -485,55 +484,71 @@ var layoutLabels = []
 
 
 ////////Handle dragging bars to specify curve width
-var drag = d3.behavior.drag()
-	.on('drag', dragmove)
+var drag1 = d3.behavior.drag()
+	.on('drag', dragRect)
+var drag2 = d3.behavior.drag()
+	.on('drag', dragLine)
 
-function dragmove(d){
-	a = d3.select(this)
-	var mouseX = d3.event.x
-	var num = a.attr('lineNum')
-	start = layoutData[num]['start']
-	thisWidth =  (mouseX - start) 
-	newPercentageVal = (thisWidth / canvasArea) * 100
-	numCurves = Object.keys(layoutData).length - 1 // -1 to do list index
-	if ((num != numCurves)){ // can't do this on the first last curve
-		nextNum = +num + 1
-		nextStart = mouseX
-		nextEnd = layoutData[nextNum]['end']
-		nextWidth = nextEnd - nextStart
-		nextPercentageVal = (nextWidth / canvasArea) * 100
-		if ((newPercentageVal > 1) & (newPercentageVal < 99) & (nextPercentageVal > 1) & (nextPercentageVal < 99)){
-			nextLabelPos = nextWidth / 2 + nextStart
-			nextPercentageLab = Math.round(nextPercentageVal) + '%'
-			nextLab = layoutData[nextNum]['label']
-			nextLab.attr('x', nextLabelPos)
-				.attr('transform', 'rotate(-90 ' + nextLabelPos + ',' + (layoutHeight / 2) + ')')
-			nextPercent = layoutData[nextNum]['label2']
-			nextPercent.attr('x', nextLabelPos).text(nextPercentageLab)
-			layoutData[nextNum] = {'start':nextStart, 'end': nextEnd, 'label':nextLab, 'width':nextWidth, 'label2':nextPercent }
-				if ((newPercentageVal > 1) & (newPercentageVal < 99)){
-					label = layoutData[num]['label']
-					labelPos = (mouseX - start)/2 +  start
-					a.attr('x1', mouseX)
-					.attr('x2', mouseX)
-					label.attr('x', labelPos)
-						.attr('transform', 'rotate(-90 ' + labelPos + ',' + (layoutHeight / 2) + ')')
-					label2 = layoutData[num]['label2']
-					newPercentageVal = thisWidth / canvasArea
-					newPercentLab = Math.round(newPercentageVal * 100) + '%'
-					label2.attr('x', labelPos)
-					label2.text(newPercentLab)
-					layoutData[num] = {'start':start, 'end': mouseX, 'label':label, 'width':thisWidth, 'label2':label2 }
-				}
+function dragRect(d){
+	console.log('Dragging the Rectangle')
+	thisRect = d3.select(this)
+	thisRectNum = +thisRect.attr('rectNum')
+	numBoxes = Object.keys(layoutData).length
+	X = d3.event.x
+	if (thisRectNum != 0){
+		leftRect = layoutData[thisRectNum-1]['rect']
+		leftRectWidth = leftRect.attr('width')
+		leftRectStart = leftRect.attr('x')
+		leftRectMiddle = (leftRectWidth + leftRectStart)/2
+		if (X < leftRectMiddle){
+			thisRect.attr('x')
 		}
 	}
-
+	if (thisRectNum != (numBoxes-1)){
+		rightRect = layoutData[thisRectNum + 1]['rect']
+	}
+	
+	
 }
-layoutWidth = 750
-layoutAxis = 75
-layoutHeight = 200
-var layoutData = {}
-var canvasArea = layoutWidth - layoutAxis
+function dragLine(d){
+	lineNum = +d3.select(this).attr('linenum')
+	line = d3.select(this)
+	leftRect = layoutData[lineNum]['rectangle']
+	leftPercentElement = layoutData[lineNum]['percentText']
+	leftLabel = layoutData[lineNum]['labelText']
+	rightNum = +lineNum +1
+	rightRect = layoutData[rightNum]['rectangle']
+	rightPercentElement = layoutData[rightNum]['percentText']
+	rightLabel = layoutData[rightNum]['labelText']
+	X = d3.event.x
+	LeftStart = leftRect.attr('x')
+	LeftWidth = X - LeftStart
+	RightEnd = +rightRect.attr('x') + +rightRect.attr('width')
+	RightStart = rightRect.attr('x')
+	RightWidth = RightEnd - X
+	leftPercent = (LeftWidth / canvasArea) * 100
+	leftPercentVal = Math.round(leftPercent)
+	rightPercent = (RightWidth / canvasArea) * 100
+	rightPercentVal = Math.round(rightPercent)
+	if ((leftPercent > 5) & (rightPercent > 5) & (leftPercent < 95) & (rightPercent < 95)){
+		line.attr('x1', X)
+		line.attr('x2', X)
+		rightRect.attr('x', X)
+		rightRect.attr('width', RightWidth)
+		leftRect.attr('width', LeftWidth)
+		rightTextPos = (+RightEnd - +X) / 2 + +X
+		leftTextPos = (+LeftWidth) / 2 + +LeftStart
+		leftPercentElement.attr('x', leftTextPos).text(leftPercentVal + '%')
+		leftLabel.attr('x', leftTextPos)
+			.attr('transform', 'rotate(-90 ' + leftTextPos + ',' + (100) + ')')
+		rightPercentElement.attr('x', rightTextPos).text(rightPercentVal + '%')
+		rightLabel.attr('x', rightTextPos)
+			.attr('transform', 'rotate(-90 ' + rightTextPos + ',' + (100) + ')')
+	}
+	
+}
+colors = ['lightyellow', 'blue', 'green', 'red']
+
 function selectTaxonForGraphing(){
 	d3.selectAll('.t').remove() //delete any existing lines so we can add new ones to the layout plot
 	id = this['id']
@@ -554,35 +569,47 @@ function selectTaxonForGraphing(){
 			xPos = (canvasArea)/numTaxa + offset
 			textPos = (xPos - oldx)/2 + oldx
 			width = xPos - oldx
-			l2 = layout.append('line')
-				.attr('x1', xPos)
-				.attr('x2', xPos)
-				.attr('y2', layoutHeight)
-				.attr('y1', 0)
-				.attr('stroke', 'green')
-				.attr('fill', 'lightyellow')
-				.attr('stroke-width', 8)
-				.attr('class', 'dragLine')
+			percent = (width / canvasArea) * 100
+			percentRound = Math.round(percent * 100) / 100
+			tax = layout.append('rect')
+				.attr('x', offset)
+				.attr('y', 0)
+				.attr('height', layoutHeight)
+				.attr('width', width)
+				.attr('fill', colors[i])
+				.attr('stroke', 'black')
 				.attr('class', 't')
-				.attr('lineNum', i)
-			label = layout.append('text')
-				.attr('x', textPos)
-				.attr('y', (layoutHeight / 2))
-				.attr('text-anchor', 'middle')
-				.text(layoutLabels[i])
-				.attr('class', 't')
-				.attr('transform', 'rotate(-90 ' + textPos + ',100)')
-			percent = Math.round((width / canvasArea) * 100) + '%'
-			label2 = layout.append('text')
-				.attr('x', textPos)
-				.attr('y', 10)
-				.attr('text-anchor', 'middle')
-				.text(percent)
-				.attr('class', 't')
+				.call(drag1)
+				.attr('opacity', 0.5)
+				.attr('rectNum', num)
 			if (i != (numTaxa - 1)){
-				l2.call(drag)
+			taxRight = layout.append('line')
+				.attr('x1', (xPos-3))
+				.attr('x2', (xPos - 3))
+				.attr('y1', 0)
+				.attr('y2', layoutHeight)
+				.attr('stroke', 'blue')
+				.attr('stroke-width', 10)
+				.attr('class', 't')
+				.call(drag2)
+				.attr('linenum', i)
+			}else{
+				taxRight = null
 			}
-			layoutData[i] = {'start':oldx, 'label2':label2,'end':xPos, 'label':label, 'width':width, 'rect':box}
+			labelText = layout.append('text')
+				.text(layoutLabels[i])
+				.attr('x', textPos)
+				.attr('y', (layoutHeight/2))
+				.attr('class', 't')
+				.attr('transform', 'rotate(-90 ' + textPos + ',' + (100) + ')')
+				.attr('text-anchor', 'middle')
+			percentText = layout.append('text')
+				.text(percentRound + '%')
+				.attr('x', textPos)
+				.attr('y', 20)
+				.attr('class', 't')
+				.attr('text-anchor', 'middle')
+			layoutData[i] = {'rectangle': tax, 'line':taxRight, 'percentText':percentText, 'labelText':labelText}
 			offset += (canvasArea)/numTaxa 
 			oldx = xPos
 			i+=1
